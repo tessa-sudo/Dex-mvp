@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dex MVP</title>
+<style>
+body{font-family:system-ui;margin:0;padding:18px;background:#f6f2ea;color:#222}
+.app{max-width:900px;margin:auto}
+.box{background:white;border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:0 2px 8px #0002}
+input,textarea{width:100%;box-sizing:border-box;padding:10px;border-radius:10px;border:1px solid #ccc;font-size:18px}
+textarea{min-height:90px}
+button{padding:10px 12px;border:0;border-radius:10px;background:#2f5d50;color:white;font-weight:800;margin:6px 6px 6px 0}
+.light{background:#e7dfd2;color:#222}
+.danger{background:#9b352d;color:white}
+.card{background:#fffdf8;border:1px solid #ddd;border-radius:12px;padding:12px;margin:8px 0}
+.word{font-size:26px;font-weight:900}
+.def{white-space:pre-wrap;font-size:18px}
+.status{font-weight:800;color:#2f5d50;min-height:24px}
+</style>
+</head>
+<body>
+<div class="app">
+<h1>Dex MVP</h1>
+
+<div class="box">
+<label><b>Word</b></label>
+<input id="word" placeholder="Example: Valence">
+<label><b>Definition</b></label>
+<textarea id="definition" placeholder="Definition goes here"></textarea>
+<button onclick="saveCard()">Save Card</button>
+<button class="light" onclick="clearForm()">New / Clear</button>
+<div id="status" class="status"></div>
+</div>
+
+<div class="box">
+<h2>Cards</h2>
+<div id="cards"></div>
+</div>
+</div>
+
+<script>
+let cards=JSON.parse(localStorage.getItem("dexCards")||"[]");
+
+function save(){
+localStorage.setItem("dexCards",JSON.stringify(cards));
+}
+
+function render(){
+let div=document.getElementById("cards");
+if(cards.length===0){
+div.innerHTML="<p>No saved cards yet.</p>";
+return;
+}
+div.innerHTML=cards.map((c,i)=>`
+<div class="card">
+<div class="word">${escapeHtml(c.word)}</div>
+<div class="def">${escapeHtml(c.definition)}</div>
+<button onclick="editCard(${i})">Edit</button>
+<button class="danger" onclick="deleteCard(${i})">Delete</button>
+</div>
+`).join("");
+}
+
+function saveCard(){
+let word=document.getElementById("word").value.trim();
+let definition=document.getElementById("definition").value.trim();
+if(!word||!definition){
+document.getElementById("status").textContent="Need both word and definition.";
+return;
+}
+cards.unshift({word,definition});
+save();
+document.getElementById("word").value="";
+document.getElementById("definition").value="";
+document.getElementById("status").textContent="Saved. Total cards: "+cards.length;
+render();
+}
+
+function clearForm(){
+document.getElementById("word").value="";
+document.getElementById("definition").value="";
+document.getElementById("status").textContent="Ready.";
+}
+
+function editCard(i){
+document.getElementById("word").value=cards[i].word;
+document.getElementById("definition").value=cards[i].definition;
+cards.splice(i,1);
+save();
+render();
+document.getElementById("status").textContent="Loaded for editing. Press Save Card.";
+}
+
+function deleteCard(i){
+cards.splice(i,1);
+save();
+render();
+document.getElementById("status").textContent="Deleted.";
+}
+
+function escapeHtml(text){
+return String(text).replace(/[&<>"']/g,function(m){
+return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m];
+});
+}
+
+render();
+</script>
+</body>
+</html>
